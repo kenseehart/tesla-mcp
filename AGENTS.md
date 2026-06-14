@@ -11,6 +11,8 @@ MCP server for the [Tesla Fleet API](https://developer.tesla.com/docs/fleet-api)
 ## Repo
 
 - Path: **`/home/ken/tesla`**
+- GitHub: [kenseehart/tesla-mcp](https://github.com/kenseehart/tesla-mcp) — fork of [ysrdevs/tesla-mcp](https://github.com/ysrdevs/tesla-mcp)
+- Remotes: `origin` → kenseehart fork, `upstream` → ysrdevs
 - Entry points: `tesla_mcp.py` (OAuth, Claude.ai/mobile), `tesla_mcp_apikey.py` (API key)
 
 ## Quick start
