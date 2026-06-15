@@ -34,7 +34,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
+load_dotenv()  # cwd override for local dev
 
 TESLA_CLIENT_ID = os.getenv("TESLA_CLIENT_ID", "")
 TESLA_CLIENT_SECRET = os.getenv("TESLA_CLIENT_SECRET", "")
