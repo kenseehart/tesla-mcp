@@ -962,10 +962,14 @@ async def tesla_key_pairing_url(domain: str, vin: Optional[str] = None) -> str:
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     transport = os.getenv("TESLA_MCP_TRANSPORT", "streamable-http")
-    host = os.getenv("TESLA_MCP_HOST", "0.0.0.0")
+    host = os.getenv("TESLA_MCP_HOST", "127.0.0.1")
     port = int(os.getenv("TESLA_MCP_PORT", "8752"))
 
     if transport == "stdio":
         mcp.run(transport="stdio")
     else:
+        if os.getenv("MCP_GATEWAY", "").strip() in ("1", "true", "yes"):
+            from ken_mcp import require_oauth_secret
+
+            require_oauth_secret(os.getenv("MCP_CLIENT_SECRET", ""), service="tesla")
         mcp.run(transport="streamable-http", host=host, port=port)
