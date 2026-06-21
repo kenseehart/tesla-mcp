@@ -98,19 +98,63 @@ def save_tokens(tokens: dict) -> None:
 
 def open_browser(url: str) -> None:
     if is_wsl():
-        for cmd in (
-            ["/mnt/c/Windows/System32/cmd.exe", "/c", "start", "", url],
-            ["wslview", url],
-            ["xdg-open", url],
+        # Non-blocking; avoid UNC cwd hanging cmd.exe from WSL project dirs.
+        cmd_line = f'start "" "{url}"'
+        for attempt in (
+            lambda: subprocess.Popen(
+                ["/mnt/c/Windows/System32/cmd.exe", "/c", cmd_line],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                cwd="/mnt/c/Windows",
+            ),
+            lambda: subprocess.Popen(["wslview", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
+            lambda: subprocess.Popen(["xdg-open", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
         ):
             try:
-                subprocess.run(cmd, check=False)
+                attempt()
                 return
             except OSError:
                 continue
         print("Could not open browser automatically — copy the URL above into Chrome/Edge.")
     else:
         webbrowser.open(url)
+
+
+def use_manual_callback() -> bool:
+    """WSL opens Windows browser; localhost callback lands on Windows, not WSL."""
+    parsed = urllib.parse.urlparse(TESLA_REDIRECT_URI)
+    if parsed.hostname not in ("localhost", "127.0.0.1"):
+        return True
+    return is_wsl()
+
+
+def prompt_for_code() -> str:
+    print(f"\nAfter Tesla login, the browser redirects to {TESLA_REDIRECT_URI}?code=...")
+    print("The page may fail to load — that's expected on WSL.")
+    print("Copy the full redirect URL from the address bar, or just the code= value.")
+    print("Do NOT paste the auth.tesla.com authorize URL.\n")
+    while True:
+        raw = input("Paste redirect URL or authorization code: ").strip()
+        if not raw:
+            continue
+        if raw.startswith("https://auth.tesla.com/"):
+            print("That's the login URL, not the callback. Complete login first, then paste the localhost URL.\n")
+            continue
+        if "redirect_uri=" in raw and "code=" not in raw:
+            print("That looks like part of the authorize URL. After login, paste the localhost callback URL.\n")
+            continue
+        if "code=" in raw:
+            parsed = urllib.parse.urlparse(raw if "://" in raw else f"http://x?{raw.lstrip('?')}")
+            qs = urllib.parse.parse_qs(parsed.query)
+            code = qs.get("code", [None])[0]
+            if code:
+                return code
+            print("Found code= but could not parse it — try the full callback URL.\n")
+            continue
+        if len(raw) < 20:
+            print("That code looks too short — paste the full callback URL from the address bar.\n")
+            continue
+        return raw
 
 
 def wait_for_callback() -> str:
@@ -154,22 +198,34 @@ def main() -> None:
         print("Error: set TESLA_CLIENT_ID and TESLA_CLIENT_SECRET in .env", file=sys.stderr)
         sys.exit(1)
 
+    if len(sys.argv) > 1 and sys.argv[1] in ("--code", "-c") and len(sys.argv) > 2:
+        code = sys.argv[2].strip()
+        tokens = exchange_code(code)
+        save_tokens(tokens)
+        print(f"Saved tokens to {TOKEN_FILE}")
+        if ENV_FILE.exists():
+            print(f"Updated TESLA_REFRESH_TOKEN in {ENV_FILE}")
+        print("Done.")
+        return
+
     url = build_auth_url()
     print("Tesla Fleet OAuth setup")
     print(f"Redirect URI: {TESLA_REDIRECT_URI}")
-    if is_wsl():
-        print("WSL detected — opening your Windows browser.")
-    print(f"\n{url}\n")
+    manual = use_manual_callback()
+    if manual:
+        if TESLA_REDIRECT_URI.startswith("https://"):
+            print("Open the URL below in your browser. After login, copy the code from the callback page.\n")
+        elif is_wsl():
+            print("WSL detected — use Windows browser; paste the redirect URL/code back here.\n")
+    print(f"{url}\n")
 
-    if TESLA_REDIRECT_URI.startswith("http://localhost") or TESLA_REDIRECT_URI.startswith(
-        "http://127.0.0.1"
-    ):
-        open_browser(url)
-        code = wait_for_callback()
+    if manual:
+        if not TESLA_REDIRECT_URI.startswith("https://"):
+            print("Open the URL above in Chrome/Edge on Windows.\n")
+        code = prompt_for_code()
     else:
         open_browser(url)
-        print(f"After login, copy the code from the redirect to {TESLA_REDIRECT_URI}")
-        code = input("Paste authorization code: ").strip()
+        code = wait_for_callback()
 
     tokens = exchange_code(code)
     save_tokens(tokens)

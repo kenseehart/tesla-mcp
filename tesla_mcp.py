@@ -52,6 +52,10 @@ TESLA_PROXY_VERIFY_SSL = os.getenv("TESLA_PROXY_VERIFY_SSL", "false").lower() ==
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "https://your-domain.com/tesla")
 MCP_CLIENT_ID = os.getenv("MCP_CLIENT_ID", "")
 MCP_CLIENT_SECRET = os.getenv("MCP_CLIENT_SECRET", "")
+TESLA_REDIRECT_URI = os.getenv(
+    "TESLA_REDIRECT_URI",
+    f"{MCP_BASE_URL.rstrip('/')}/callback",
+)
 
 TOKEN_FILE = os.getenv("TESLA_TOKEN_FILE", str(Path.home() / ".tesla_tokens.json"))
 
@@ -251,7 +255,7 @@ mcp = FastMCP(
 # ===========================================================================
 @mcp.tool()
 async def tesla_oauth_url(
-    redirect_uri: str = "https://your-domain.com/tesla/callback",
+    redirect_uri: str = TESLA_REDIRECT_URI,
     scopes: str = "openid offline_access user_data vehicle_device_data vehicle_location vehicle_cmds vehicle_charging_cmds",
 ) -> str:
     """Generate the Tesla OAuth authorization URL. User must visit this URL,
@@ -273,7 +277,7 @@ async def tesla_oauth_url(
 
 
 @mcp.tool()
-async def tesla_oauth_exchange(code: str, redirect_uri: str = "https://your-domain.com/tesla/callback") -> str:
+async def tesla_oauth_exchange(code: str, redirect_uri: str = TESLA_REDIRECT_URI) -> str:
     """Exchange an OAuth authorization code for access + refresh tokens."""
     if not TESLA_CLIENT_ID or not TESLA_CLIENT_SECRET:
         return "Error: TESLA_CLIENT_ID and TESLA_CLIENT_SECRET must be set in environment."

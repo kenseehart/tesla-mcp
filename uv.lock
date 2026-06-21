@@ -618,6 +618,21 @@ wheels = [
 ]
 
 [[package]]
+name = "ken-mcp"
+version = "0.1.0"
+source = { editable = "../shared/mcp" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "mcp" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=2.0.0" },
+    { name = "mcp", specifier = ">=1.0.0" },
+]
+
+[[package]]
 name = "keyring"
 version = "25.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1429,6 +1444,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
     { name = "httpx" },
+    { name = "ken-mcp" },
     { name = "pyjwt" },
     { name = "python-dotenv" },
 ]
@@ -1437,6 +1453,7 @@ dependencies = [
 requires-dist = [
     { name = "fastmcp", specifier = ">=2.0.0" },
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "ken-mcp", editable = "../shared/mcp" },
     { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
 ]

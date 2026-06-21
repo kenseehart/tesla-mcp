@@ -2,7 +2,7 @@
 
 ## Shared resources
 
-Cross-project assets: **`/home/ken/shared`**. Workspace index: **`/home/ken/AGENTS.md`**.
+Cross-project assets: **`/home/ken/ws/shared`**. Workspace index: **`/home/ken/ws/AGENTS.md`**.
 
 ## What this project is
 
@@ -10,7 +10,7 @@ MCP server for the [Tesla Fleet API](https://developer.tesla.com/docs/fleet-api)
 
 ## Repo
 
-- Path: **`/home/ken/tesla`**
+- Path: **`/home/ken/ws/tesla`**
 - GitHub: [kenseehart/tesla-mcp](https://github.com/kenseehart/tesla-mcp) — fork of [ysrdevs/tesla-mcp](https://github.com/ysrdevs/tesla-mcp)
 - Remotes: `origin` → kenseehart fork, `upstream` → ysrdevs
 - Entry points: `tesla_mcp.py` (OAuth, Claude.ai/mobile), `tesla_mcp_apikey.py` (API key)
@@ -18,7 +18,7 @@ MCP server for the [Tesla Fleet API](https://developer.tesla.com/docs/fleet-api)
 ## Quick start
 
 ```bash
-cd /home/ken/tesla
+cd /home/ken/ws/tesla
 cp .env.example .env   # fill Tesla + OAuth credentials
 uv sync
 uv run tesla-fleet-mcp  # or python tesla_mcp.py
@@ -26,7 +26,7 @@ uv run tesla-fleet-mcp  # or python tesla_mcp.py
 
 ## MCP (Cursor)
 
-Registered in `/home/ken/.cursor/mcp.json` as `tesla`. Secrets in `.env` (never commit).
+Registered in `/home/ken/ws/.cursor/mcp.json` as `tesla`. Secrets in `.env` (never commit).
 
 ## Remote / phone
 
