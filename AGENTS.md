@@ -37,7 +37,7 @@ OAuth mode syncs to Claude mobile after deploy to my.hosting.com. See **`README.
 | File | Role |
 |------|------|
 | `tesla_mcp.py` | OAuth MCP server (port 8752) |
-| `personal_auth.py` | OAuth helpers |
+| (sign-in) | `ken_mcp.gateway_auth`: GitHub sign-in, Claude registers itself |
 | `scripts/auth.py` | One-time token setup |
 
 ## Conventions

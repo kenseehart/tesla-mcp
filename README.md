@@ -80,10 +80,9 @@ TESLA_MCP_TRANSPORT=stdio uv run python tesla_mcp.py
 
 1. Run `tesla_mcp.py` on your server
 2. Go to Claude.ai → Settings → Connectors → Add custom connector
-3. URL: `https://your-domain.com/tesla/mcp`
-4. Click Advanced Settings
-5. Enter your `MCP_CLIENT_ID` and `MCP_CLIENT_SECRET`
-6. Click Add
+3. URL: `https://mcp-tesla.seehart.com/mcp` (this fork; set `MCP_BASE_URL` for yours)
+4. Click Add, then Connect, and sign in with GitHub (ken_mcp's gateway sign-in;
+   only the logins in `MCP_ALLOWED_GITHUB_USERS` get in)
 
 Once connected on web, it syncs to Claude mobile automatically.
 
@@ -364,9 +363,10 @@ location /tesla-api/ {
 | `TESLA_MCP_TRANSPORT` | `streamable-http` | `streamable-http` or `stdio` |
 | `TESLA_MCP_HOST` | `0.0.0.0` | Bind address |
 | `TESLA_MCP_PORT` | `8752` | OAuth server port |
-| `MCP_BASE_URL` | | Public URL for OAuth discovery |
-| `MCP_CLIENT_ID` | | OAuth client ID for MCP auth |
-| `MCP_CLIENT_SECRET` | | OAuth client secret for MCP auth |
+| `MCP_BASE_URL` | `https://mcp-tesla.seehart.com` | This server's public origin |
+| `MCP_GITHUB_CLIENT_ID`, `MCP_GITHUB_CLIENT_SECRET` | | The gateway's GitHub App (ken_mcp) |
+| `MCP_ALLOWED_GITHUB_USERS` | | GitHub logins allowed to sign in |
+| `TESLA_REDIRECT_URI` | (required) | Tesla OAuth redirect registered with the Tesla developer app |
 | `MCP_API_KEY` | auto-generated | API key for API key mode |
 | `TESLA_MCP_PORT_APIKEY` | `8753` | API key server port |
 

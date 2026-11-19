@@ -24,12 +24,8 @@ import httpx
 import jwt
 from dotenv import load_dotenv
 
-try:
-    from fastmcp import FastMCP
-    from personal_auth import PersonalAuthProvider
-except ImportError:
-    print("Missing dependencies. Run: uv add fastmcp && uv add git+https://github.com/crumrine/fastmcp-personal-auth")
-    sys.exit(1)
+from fastmcp import FastMCP
+from ken_mcp import add_health_route, gateway_auth
 
 # ---------------------------------------------------------------------------
 # Config
@@ -48,14 +44,13 @@ TESLA_REGION = os.getenv("TESLA_REGION", "na")  # na, eu, cn
 TESLA_PROXY_URL = os.getenv("TESLA_PROXY_URL", "")  # e.g. https://localhost:4443
 TESLA_PROXY_VERIFY_SSL = os.getenv("TESLA_PROXY_VERIFY_SSL", "false").lower() == "true"
 
-# MCP OAuth -- credentials for connecting to this MCP server
-MCP_BASE_URL = os.getenv("MCP_BASE_URL", "https://your-domain.com/tesla")
-MCP_CLIENT_ID = os.getenv("MCP_CLIENT_ID", "")
-MCP_CLIENT_SECRET = os.getenv("MCP_CLIENT_SECRET", "")
-TESLA_REDIRECT_URI = os.getenv(
-    "TESLA_REDIRECT_URI",
-    f"{MCP_BASE_URL.rstrip('/')}/callback",
-)
+# This MCP server's public origin (one hostname per service on Ken's box;
+# host repo, docs/box.md). Claude signs in through ken_mcp's GitHub sign-in.
+MCP_BASE_URL = os.getenv("MCP_BASE_URL", "https://mcp-tesla.seehart.com")
+OAUTH_STATE_DIR = os.path.expanduser(os.getenv("TESLA_MCP_OAUTH_STATE_DIR", "~/.config/tesla/oauth-state"))
+# Tesla's own OAuth (the car account) redirects here; it is the URI registered
+# with the Tesla developer app, which is NOT this server's origin.
+TESLA_REDIRECT_URI = os.environ["TESLA_REDIRECT_URI"]
 
 TOKEN_FILE = os.getenv("TESLA_TOKEN_FILE", str(Path.home() / ".tesla_tokens.json"))
 
@@ -230,9 +225,7 @@ def _vin(vin: Optional[str] = None) -> str:
 
 
 # ---------------------------------------------------------------------------
-# OAuth 2.1 Authentication
-# Set MCP_CLIENT_ID and MCP_CLIENT_SECRET in .env
-# Clients must provide these credentials to authorize (Claude.ai Advanced Settings)
+# Sign-in: ken_mcp.gateway_auth (GitHub; Claude registers itself)
 # ---------------------------------------------------------------------------
 mcp = FastMCP(
     "Tesla Fleet API",
@@ -243,12 +236,9 @@ mcp = FastMCP(
         "Commands require the vehicle to be awake -- use tesla_wait_for_wake first. "
         "Destructive actions (unlock, remote_start) should be confirmed with the user."
     ),
-    auth=PersonalAuthProvider(
-        base_url=MCP_BASE_URL,
-        client_id=MCP_CLIENT_ID or None,
-        client_secret=MCP_CLIENT_SECRET or None,
-    ),
+    auth=gateway_auth(service="tesla", base_url=MCP_BASE_URL, state_dir=OAUTH_STATE_DIR),
 )
+add_health_route(mcp, service="tesla", repo=Path(__file__).resolve().parent, watch=[OAUTH_STATE_DIR])
 
 # ===========================================================================
 # OAUTH / SETUP TOOLS
@@ -972,8 +962,4 @@ if __name__ == "__main__":
     if transport == "stdio":
         mcp.run(transport="stdio")
     else:
-        if os.getenv("MCP_GATEWAY", "").strip() in ("1", "true", "yes"):
-            from ken_mcp import require_oauth_secret
-
-            require_oauth_secret(os.getenv("MCP_CLIENT_SECRET", ""), service="tesla")
         mcp.run(transport="streamable-http", host=host, port=port)
